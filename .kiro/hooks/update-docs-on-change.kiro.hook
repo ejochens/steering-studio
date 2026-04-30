@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "name": "Update Documentation on Source Changes",
+  "description": "Monitors important application, configuration, and schema files. When meaningful changes are detected, asks the agent to update the minimal documentation set while keeping docs cohesive, consolidated, and human-friendly.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "app/**/*.ts",
+      "app/**/*.tsx",
+      "components/**/*.ts",
+      "components/**/*.tsx",
+      "lib/**/*.ts",
+      "lib/**/*.tsx",
+      "prisma/schema.prisma",
+      "package.json",
+      "tsconfig.json",
+      ".env.example"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A source file has been modified. Review the change and update documentation only if the change affects user-visible behavior, local setup, configuration, architecture, API behavior, important workflows, or output document generation. Treat the documentation set as intentionally minimal. Prefer updating existing files instead of creating new ones. The canonical documentation set is README.md, docs/product-guide.md, docs/architecture.md, and docs/reference.md. Do not create additional documentation files unless absolutely necessary. Keep documentation optimized for humans: concise, well-structured, scannable, task-oriented, and free of duplication. Maintain a strong table of contents in README.md and keep cross-links accurate. Before editing, review the current documentation set for overlap so updates stay cohesive. If multiple docs could be updated, prefer the single most appropriate location and avoid repeating the same content. Only document stable, meaningful implementation details. Do not add noise from minor refactors or temporary changes. If no documentation update is needed, make no documentation changes."
+  }
+}

@@ -1,0 +1,23 @@
+# Bootstrap Foundation Tasks
+
+- [x] 1. Initialize the Next.js project shell and copy in repository guidance files.
+- [x] 2. Create the shell layout with header (app name, home link, settings link) that wraps all pages.
+- [x] 3. Create the home dashboard page at `/` showing project list, provider status indicator, and "New Project" action.
+  - [x] 3.1 Show empty/welcome state when no projects exist.
+  - [x] 3.2 Show project cards with name, target output, and progress status.
+  - [x] 3.3 Show "Continue" action on in-progress projects.
+  - [x] 3.4 Show provider configuration status with link to `/settings/provider`.
+- [x] 4. Create the initial Prisma schema with `Project` and `ProviderConnection` models.
+- [x] 5. Implement shared Zod schemas for project creation and provider settings.
+- [x] 6. Create the new project page and form at `/projects/new`.
+- [x] 7. Implement server-side project creation action and routing to the workspace.
+- [x] 8. Create the workspace layout with project sub-navigation (intake, chat, documents, export) and project name breadcrumb.
+- [x] 9. Create the workspace overview page at `/projects/[id]` with a setup checklist.
+- [x] 10. Create the settings layout and application-level provider settings page and form at `/settings/provider`.
+- [x] 11. Implement a minimal provider adapter contract and one initial adapter.
+- [x] 12. Implement a server-side provider connection test action.
+- [x] 13. Implement secure save behavior for provider settings without returning secrets to the client.
+- [x] 14. Add unit tests for schema validation and config normalization.
+- [x] 15. Add integration tests for project creation and provider save flows.
+- [x] 16. Add one Playwright test for the happy path bootstrap flow.
+- [x] 17. Review and update steering docs if the repository structure changes during implementation.

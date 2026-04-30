@@ -1,0 +1,12 @@
+{
+  "name": "Documentation Cohesion Review",
+  "description": "Reviews the full project documentation set holistically and consolidates it into a minimal, cohesive, human-friendly structure.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the complete project documentation set holistically:\\n\\n- README.md\\n- docs/product-guide.md\\n- docs/architecture.md\\n- docs/reference.md\\n\\nYour goal is to keep documentation minimal, cohesive, and optimized for humans.\\n\\nPerform this review:\\n1. Read the full documentation set before editing.\\n2. Identify duplicated content, weak structure, outdated sections, broken cross-links, and inconsistent terminology.\\n3. Consolidate overlapping material into the best single location.\\n4. Improve README.md as the primary navigation page with a clean table of contents and accurate links.\\n5. Keep the total document set minimal. Prefer fewer stronger files over many narrow files.\\n6. Do not create new documentation files unless absolutely necessary.\\n7. Preserve important technical truth, but rewrite for clarity and readability where needed.\\n8. Ensure the docs reflect the current architecture, workflows, configuration model, and markdown output behavior.\\n9. If content is too detailed for the README, move it into the most appropriate existing docs file rather than creating a new file.\\n10. Keep documentation useful for both engineers and technical product stakeholders.\\n\\nOutput should favor:\\n- clarity over exhaustiveness\\n- consolidation over expansion\\n- durable explanations over change-by-change notes"
+  }
+}

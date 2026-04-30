@@ -1,0 +1,144 @@
+// Prisma schema for Steering Studio
+// Local dev uses SQLite; production target is PostgreSQL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ── Enums (modelled as strings for SQLite compatibility) ──────────────
+
+// TargetOutput: "Kiro" | "Copilot" | "Both"
+// ProjectStatus: "setup" | "intake" | "review" | "generating" | "complete"
+// AuthMode: "api_key" | "iam" | "session"
+// TestStatus: "success" | "failure" | "untested"
+
+// SQLite does not support native enums, so we store these as String
+// and validate at the application layer with Zod schemas.
+
+model Project {
+  id              String   @id @default(cuid())
+  name            String
+  workingTitle    String
+  targetOutput    String   // "Kiro" | "Copilot" | "Both"
+  projectType     String   @default("new") // "new" | "extension"
+  hasExistingDocs Boolean  @default(false)
+  status          String   @default("setup") // "setup" | "intake" | "review" | "generating" | "complete"
+  codebasePath    String?  // absolute filesystem path to codebase root
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  intakeSections      IntakeSection[]
+  uploadedDocuments   UploadedDocument[]
+  conversationSession ConversationSession?
+  generatedDocuments  GeneratedDocument[]
+}
+
+model IntakeSection {
+  id             String   @id @default(cuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sectionKey     String
+  displayName    String
+  sortOrder      Int
+  coverageStatus String   @default("unknown") // "unknown" | "partial" | "complete"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  answers Answer[]
+
+  @@unique([projectId, sectionKey])
+}
+
+model Answer {
+  id              String        @id @default(cuid())
+  intakeSectionId String
+  intakeSection   IntakeSection @relation(fields: [intakeSectionId], references: [id], onDelete: Cascade)
+  fieldKey        String
+  value           String        // stored as text; JSON for multi-value fields
+  source          String        @default("user-form") // "user-form" | "ai-inferred" | "ai-conversation"
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([intakeSectionId, fieldKey])
+}
+
+model UploadedDocument {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  filename  String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model ProviderConnection {
+  id              String    @id @default(cuid())
+  providerType    String    // e.g. "openai", "azure_openai", "bedrock"
+  endpoint        String?   // base URL for OpenAI-compatible / Azure providers
+  region          String?   // AWS region for Bedrock
+  modelName       String
+  authMode        String    // "api_key" | "iam" | "session"
+  encryptedSecret String?   // encrypted API key; null when session-only
+  apiVersion      String?   // Azure OpenAI API version, e.g. "2025-01-01-preview"
+  isDefault       Boolean   @default(false)
+  lastTestStatus  String?   // "success" | "failure" | "untested"
+  lastTestedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  modelAssignments ModelAssignment[]
+}
+
+model ModelAssignment {
+  id                   String             @id @default(cuid())
+  aiFunction           String             // "intake" | "generation"
+  providerConnectionId String
+  providerConnection   ProviderConnection @relation(fields: [providerConnectionId], references: [id], onDelete: Cascade)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@unique([aiFunction])
+}
+
+model ConversationSession {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ConversationMessage[]
+}
+
+model ConversationMessage {
+  id        String              @id @default(cuid())
+  sessionId String
+  session   ConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String              // "user" | "assistant"
+  content   String
+  createdAt DateTime            @default(now())
+
+  @@index([sessionId])
+}
+
+model GeneratedDocument {
+  id              String   @id @default(cuid())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  filePath        String   // e.g. ".kiro/steering/product.md"
+  content         String   // final markdown content (post-refinement if applied)
+  draftContent    String   // Layer 1 template-rendered content (pre-refinement)
+  completeness    String   // "complete" | "partial" | "empty"
+  missingFields   String   @default("[]") // JSON array of missing field names
+  templateVersion String   @default("1.0")
+  manuallyEdited  Boolean  @default(false)
+  generatedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([projectId, filePath])
+}
