@@ -139,10 +139,18 @@ export default async function ProjectOverviewPage({
   const isExtensionWithDocs =
     project.projectType === "extension" && project.hasExistingDocs === true;
 
-  const [uploadedDocumentCount, answerCount, generatedDocumentCount] =
+  const [uploadedDocumentCount, extractedFactCount, answerCount, generatedDocumentCount] =
     await Promise.all([
       isExtensionWithDocs
         ? prisma.uploadedDocument.count({ where: { projectId } })
+        : Promise.resolve(0),
+      isExtensionWithDocs
+        ? prisma.answer.count({
+            where: {
+              intakeSection: { projectId },
+              source: "ai-suggested",
+            },
+          })
         : Promise.resolve(0),
       prisma.answer.count({
         where: { intakeSection: { projectId } },
@@ -157,6 +165,7 @@ export default async function ProjectOverviewPage({
     hasExistingDocs: project.hasExistingDocs,
     isProviderConfigured,
     uploadedDocumentCount,
+    extractedFactCount,
     answerCount,
     generatedDocumentCount,
     projectId,

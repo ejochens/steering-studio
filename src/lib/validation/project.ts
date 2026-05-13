@@ -28,6 +28,7 @@ export const createProjectSchema = z.object({
   targetOutput: targetOutputSchema,
   projectType: projectTypeSchema,
   hasExistingDocs: z.boolean(),
+  codebasePath: z.string().optional(),
 });
 
 export const updateProjectSettingsSchema = z.object({

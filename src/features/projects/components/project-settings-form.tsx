@@ -53,6 +53,7 @@ export default function ProjectSettingsForm({
     register,
     handleSubmit,
     watch,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<UpdateProjectSettingsInput>({
     resolver: zodResolver(updateProjectSettingsSchema),
@@ -72,6 +73,24 @@ export default function ProjectSettingsForm({
   const watchedCodebasePath = watch("codebasePath");
 
   async function handleScanCodebase() {
+    // Auto-save settings before scanning so the codebasePath is persisted
+    if (isDirty) {
+      const values = getValues();
+      const saveResult = await updateProjectSettings(projectId, values);
+      if (saveResult.error) {
+        setScanStatus("error");
+        setScanResult({
+          success: false,
+          filesScanned: 0,
+          deterministicFieldCount: 0,
+          aiFieldCount: 0,
+          warnings: [],
+          error: `Could not save settings before scanning: ${saveResult.error}`,
+        });
+        return;
+      }
+    }
+
     setScanStatus("scanning");
     setScanResult(null);
     try {
@@ -314,7 +333,7 @@ export default function ProjectSettingsForm({
             <button
               type="button"
               onClick={handleScanCodebase}
-              disabled={scanStatus === "scanning" || isDirty}
+              disabled={scanStatus === "scanning"}
               className="mt-2 inline-flex items-center rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {scanStatus === "scanning" ? "Scanning codebase…" : "Scan Codebase"}

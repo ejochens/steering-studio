@@ -18,23 +18,27 @@ const projectIdArb = fc.string({ minLength: 1, maxLength: 50 }).filter((s) => s.
 /** Generate a non-negative integer for uploaded document count */
 const docCountArb = fc.nat({ max: 1000 });
 
+/** Generate a non-negative integer for extracted fact count */
+const factCountArb = fc.nat({ max: 1000 });
+
 // ── Property Tests ──────────────────────────────────────────────────
 
 describe("Feature: project-type-and-import, Property 11: Setup checklist conditionally includes upload step", () => {
   it('includes "Upload Documents" step when projectType is "extension" AND hasExistingDocs is true', () => {
     fc.assert(
-      fc.property(projectIdArb, fc.boolean(), docCountArb, (projectId, isProviderConfigured, uploadedDocumentCount) => {
+      fc.property(projectIdArb, fc.boolean(), docCountArb, factCountArb, (projectId, isProviderConfigured, uploadedDocumentCount, extractedFactCount) => {
         const items = buildChecklistItems({
           projectType: "extension",
           hasExistingDocs: true,
           isProviderConfigured,
           uploadedDocumentCount,
+          extractedFactCount,
           answerCount: 0,
           generatedDocumentCount: 0,
           projectId,
         });
 
-        const uploadStep = items.find((item) => item.label === "Upload Documents");
+        const uploadStep = items.find((item) => item.label.startsWith("Upload Documents"));
         expect(uploadStep).toBeDefined();
         expect(uploadStep!.href).toBe(`/projects/${projectId}/upload`);
       }),
@@ -44,19 +48,20 @@ describe("Feature: project-type-and-import, Property 11: Setup checklist conditi
 
   it('does NOT include "Upload Documents" step when projectType is NOT "extension"', () => {
     fc.assert(
-      fc.property(nonExtensionTypeArb, fc.boolean(), fc.boolean(), docCountArb, projectIdArb,
-        (projectType, hasExistingDocs, isProviderConfigured, uploadedDocumentCount, projectId) => {
+      fc.property(nonExtensionTypeArb, fc.boolean(), fc.boolean(), docCountArb, factCountArb, projectIdArb,
+        (projectType, hasExistingDocs, isProviderConfigured, uploadedDocumentCount, extractedFactCount, projectId) => {
           const items = buildChecklistItems({
             projectType,
             hasExistingDocs,
             isProviderConfigured,
             uploadedDocumentCount,
+            extractedFactCount,
             answerCount: 0,
             generatedDocumentCount: 0,
             projectId,
           });
 
-          const uploadStep = items.find((item) => item.label === "Upload Documents");
+          const uploadStep = items.find((item) => item.label.startsWith("Upload Documents"));
           expect(uploadStep).toBeUndefined();
         },
       ),
@@ -66,19 +71,20 @@ describe("Feature: project-type-and-import, Property 11: Setup checklist conditi
 
   it('does NOT include "Upload Documents" step when hasExistingDocs is false', () => {
     fc.assert(
-      fc.property(fc.boolean(), docCountArb, projectIdArb,
-        (isProviderConfigured, uploadedDocumentCount, projectId) => {
+      fc.property(fc.boolean(), docCountArb, factCountArb, projectIdArb,
+        (isProviderConfigured, uploadedDocumentCount, extractedFactCount, projectId) => {
           const items = buildChecklistItems({
             projectType: "extension",
             hasExistingDocs: false,
             isProviderConfigured,
             uploadedDocumentCount,
+            extractedFactCount,
             answerCount: 0,
             generatedDocumentCount: 0,
             projectId,
           });
 
-          const uploadStep = items.find((item) => item.label === "Upload Documents");
+          const uploadStep = items.find((item) => item.label.startsWith("Upload Documents"));
           expect(uploadStep).toBeUndefined();
         },
       ),
@@ -86,21 +92,22 @@ describe("Feature: project-type-and-import, Property 11: Setup checklist conditi
     );
   });
 
-  it('marks "Upload Documents" step as done when uploadedDocumentCount > 0', () => {
+  it('marks "Upload Documents" step as done when uploadedDocumentCount > 0 AND extractedFactCount > 0', () => {
     fc.assert(
-      fc.property(fc.boolean(), fc.integer({ min: 1, max: 1000 }), projectIdArb,
-        (isProviderConfigured, uploadedDocumentCount, projectId) => {
+      fc.property(fc.boolean(), fc.integer({ min: 1, max: 1000 }), fc.integer({ min: 1, max: 1000 }), projectIdArb,
+        (isProviderConfigured, uploadedDocumentCount, extractedFactCount, projectId) => {
           const items = buildChecklistItems({
             projectType: "extension",
             hasExistingDocs: true,
             isProviderConfigured,
             uploadedDocumentCount,
+            extractedFactCount,
             answerCount: 0,
             generatedDocumentCount: 0,
             projectId,
           });
 
-          const uploadStep = items.find((item) => item.label === "Upload Documents");
+          const uploadStep = items.find((item) => item.label.startsWith("Upload Documents"));
           expect(uploadStep).toBeDefined();
           expect(uploadStep!.done).toBe(true);
         },
@@ -111,21 +118,48 @@ describe("Feature: project-type-and-import, Property 11: Setup checklist conditi
 
   it('marks "Upload Documents" step as NOT done when uploadedDocumentCount is 0', () => {
     fc.assert(
-      fc.property(fc.boolean(), projectIdArb,
-        (isProviderConfigured, projectId) => {
+      fc.property(fc.boolean(), factCountArb, projectIdArb,
+        (isProviderConfigured, extractedFactCount, projectId) => {
           const items = buildChecklistItems({
             projectType: "extension",
             hasExistingDocs: true,
             isProviderConfigured,
             uploadedDocumentCount: 0,
+            extractedFactCount,
             answerCount: 0,
             generatedDocumentCount: 0,
             projectId,
           });
 
-          const uploadStep = items.find((item) => item.label === "Upload Documents");
+          const uploadStep = items.find((item) => item.label.startsWith("Upload Documents"));
           expect(uploadStep).toBeDefined();
           expect(uploadStep!.done).toBe(false);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it('marks "Upload Documents" step as NOT done when extractedFactCount is 0 even if documents uploaded', () => {
+    fc.assert(
+      fc.property(fc.boolean(), fc.integer({ min: 1, max: 1000 }), projectIdArb,
+        (isProviderConfigured, uploadedDocumentCount, projectId) => {
+          const items = buildChecklistItems({
+            projectType: "extension",
+            hasExistingDocs: true,
+            isProviderConfigured,
+            uploadedDocumentCount,
+            extractedFactCount: 0,
+            answerCount: 0,
+            generatedDocumentCount: 0,
+            projectId,
+          });
+
+          const uploadStep = items.find((item) => item.label.startsWith("Upload Documents"));
+          expect(uploadStep).toBeDefined();
+          expect(uploadStep!.done).toBe(false);
+          // Should show the "extraction pending" label
+          expect(uploadStep!.label).toContain("extraction pending");
         },
       ),
       { numRuns: 100 },

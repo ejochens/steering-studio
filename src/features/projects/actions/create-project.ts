@@ -21,6 +21,7 @@ export async function createProject(data: CreateProjectInput) {
         targetOutput: parsed.data.targetOutput,
         projectType: parsed.data.projectType,
         hasExistingDocs: parsed.data.hasExistingDocs,
+        codebasePath: parsed.data.codebasePath || null,
         status: "setup",
       },
     });

@@ -10,6 +10,7 @@ export interface BuildChecklistInput {
   hasExistingDocs: boolean;
   isProviderConfigured: boolean;
   uploadedDocumentCount: number;
+  extractedFactCount: number;
   answerCount: number;
   generatedDocumentCount: number;
   projectId: string;
@@ -21,6 +22,7 @@ export function buildChecklistItems(input: BuildChecklistInput): ChecklistItem[]
     hasExistingDocs,
     isProviderConfigured,
     uploadedDocumentCount,
+    extractedFactCount,
     answerCount,
     generatedDocumentCount,
     projectId,
@@ -28,6 +30,9 @@ export function buildChecklistItems(input: BuildChecklistInput): ChecklistItem[]
 
   const isExtensionWithDocs =
     projectType === "extension" && hasExistingDocs === true;
+
+  // Upload is only truly "done" when files are uploaded AND facts were extracted
+  const uploadDone = uploadedDocumentCount > 0 && extractedFactCount > 0;
 
   return [
     {
@@ -43,10 +48,12 @@ export function buildChecklistItems(input: BuildChecklistInput): ChecklistItem[]
     ...(isExtensionWithDocs
       ? [
           {
-            label: "Upload Documents",
-            done: uploadedDocumentCount > 0,
+            label: uploadedDocumentCount > 0 && extractedFactCount === 0
+              ? "Upload Documents (uploaded, extraction pending)"
+              : "Upload Documents",
+            done: uploadDone,
             href: `/projects/${projectId}/upload`,
-            actionLabel: "Upload",
+            actionLabel: uploadedDocumentCount > 0 ? "Re-upload" : "Upload",
           },
         ]
       : []),

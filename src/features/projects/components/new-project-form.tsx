@@ -38,6 +38,7 @@ export default function NewProjectForm() {
       targetOutput: undefined,
       projectType: "new",
       hasExistingDocs: false,
+      codebasePath: "",
     },
   });
 
@@ -222,6 +223,40 @@ export default function NewProjectForm() {
               </p>
             </div>
           </label>
+        </div>
+      )}
+
+      {/* Codebase path (only shown for extension projects) */}
+      {selectedProjectType === "extension" && (
+        <div>
+          <label
+            htmlFor="codebasePath"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Codebase Path
+          </label>
+          <input
+            id="codebasePath"
+            type="text"
+            {...register("codebasePath")}
+            aria-invalid={!!errors.codebasePath}
+            aria-describedby={errors.codebasePath ? "codebasePath-error" : "codebasePath-hint"}
+            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.codebasePath
+                ? "border-red-400 focus:ring-red-500"
+                : "border-gray-300"
+            }`}
+            placeholder="C:\Users\dev\my-project"
+          />
+          {errors.codebasePath ? (
+            <p id="codebasePath-error" role="alert" className="mt-1 text-sm text-red-600">
+              {errors.codebasePath.message}
+            </p>
+          ) : (
+            <p id="codebasePath-hint" className="mt-1 text-xs text-gray-500">
+              The absolute filesystem path to your existing project root directory. You can scan the codebase after creation.
+            </p>
+          )}
         </div>
       )}
 
